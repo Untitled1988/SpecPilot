@@ -25,6 +25,11 @@ const initToolPicker = document.querySelector("#initToolPicker");
 const initProfileSelect = document.querySelector("#initProfileSelect");
 const initForceCheckbox = document.querySelector("#initForceCheckbox");
 const initCommandPreview = document.querySelector("#initCommandPreview");
+const sidebarStatus = document.querySelector("#sidebarStatus");
+const navItems = document.querySelectorAll(".navItem");
+const viewSections = document.querySelectorAll(".view");
+const initShortcutBtn = document.querySelector("#initShortcutBtn");
+const toggleTerminalBtn = document.querySelector("#toggleTerminalBtn");
 const isFileMode = location.protocol === "file:";
 let socket = null;
 let term = null;
@@ -35,9 +40,9 @@ let resizeStartY = 0;
 let resizeStartHeight = 0;
 
 const terminalHeights = {
-  compact: 420,
-  medium: 560,
-  large: 760
+  compact: 240,
+  medium: 360,
+  large: 520
 };
 
 const toolLabels = {
@@ -78,6 +83,7 @@ function append(text, className = "stdout") {
 function renderStatus(status) {
   renderWorkspace(status.workspace);
   const order = ["node", "npm", "openspec", "copilot"];
+  renderSidebarStatus(status, order);
   toolGrid.innerHTML = "";
   for (const key of order) {
     const tool = status.tools[key];
@@ -111,6 +117,42 @@ function renderStatus(status) {
       card.append(btn);
     }
     toolGrid.append(card);
+  }
+}
+
+function renderSidebarStatus(status, order) {
+  if (!sidebarStatus) return;
+  sidebarStatus.innerHTML = "";
+  for (const key of order) {
+    const tool = status.tools[key];
+    const meta = toolLabels[key];
+    const row = document.createElement("div");
+    row.className = "sideStatusItem";
+
+    const left = document.createElement("div");
+    left.className = "sideStatusName";
+    const dot = document.createElement("span");
+    dot.className = `dot ${tool.ok ? "ok" : "bad"}`;
+    const name = document.createElement("span");
+    name.textContent = meta.name;
+    left.append(dot, name);
+
+    let right;
+    if (!tool.ok && meta.install) {
+      right = document.createElement("button");
+      right.type = "button";
+      right.className = "sideStatusTag install";
+      right.textContent = "安装";
+      right.addEventListener("click", () => install(meta.install, right));
+    } else {
+      right = document.createElement("span");
+      right.className = "sideStatusTag";
+      right.textContent = tool.version || (tool.ok ? "正常" : "缺失");
+      right.title = right.textContent;
+    }
+
+    row.append(left, right);
+    sidebarStatus.append(row);
   }
 }
 
@@ -300,6 +342,50 @@ runInitBtn.addEventListener("click", runInitCommand);
 initToolPicker.addEventListener("change", refreshInitPreview);
 initProfileSelect.addEventListener("change", refreshInitPreview);
 initForceCheckbox.addEventListener("change", refreshInitPreview);
+
+function setActiveNav(viewId) {
+  navItems.forEach((item) => {
+    item.classList.toggle("active", item.dataset.view === viewId);
+  });
+}
+
+navItems.forEach((item) => {
+  item.addEventListener("click", (event) => {
+    event.preventDefault();
+    const target = document.getElementById(item.dataset.view);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setActiveNav(item.dataset.view);
+  });
+});
+
+const contentScroll = document.querySelector(".content");
+if (contentScroll && "IntersectionObserver" in window) {
+  const spy = new IntersectionObserver(
+    (entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible) {
+        setActiveNav(visible.target.id);
+      }
+    },
+    { root: contentScroll, rootMargin: "-20% 0px -60% 0px", threshold: [0.1, 0.5, 1] }
+  );
+  viewSections.forEach((section) => spy.observe(section));
+}
+
+if (initShortcutBtn) {
+  initShortcutBtn.addEventListener("click", () => {
+    const target = document.getElementById("view-dashboard");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setActiveNav("view-dashboard");
+    runInitBtn.focus();
+  });
+}
 terminalSizeButtons.forEach((button) => {
   button.addEventListener("click", () => setTerminalHeight(terminalHeights[button.dataset.terminalSize]));
 });
@@ -312,13 +398,27 @@ terminalResizeHandle.addEventListener("pointerdown", (event) => {
 });
 terminalResizeHandle.addEventListener("pointermove", (event) => {
   if (!isResizingTerminal) return;
-  setTerminalHeight(resizeStartHeight + event.clientY - resizeStartY);
+  setTerminalHeight(resizeStartHeight - (event.clientY - resizeStartY));
 });
 terminalResizeHandle.addEventListener("pointerup", (event) => {
   isResizingTerminal = false;
   terminalResizeHandle.releasePointerCapture(event.pointerId);
   document.body.classList.remove("resizingTerminal");
 });
+
+if (toggleTerminalBtn) {
+  toggleTerminalBtn.addEventListener("click", () => {
+    const collapsed = terminalPanel.classList.toggle("collapsed");
+    toggleTerminalBtn.setAttribute("aria-expanded", String(!collapsed));
+    toggleTerminalBtn.title = collapsed ? "展开终端" : "收起终端";
+    toggleTerminalBtn.querySelector(".material-symbols-outlined").textContent = collapsed
+      ? "keyboard_arrow_up"
+      : "keyboard_arrow_down";
+    if (!collapsed) {
+      requestAnimationFrame(resizeTerminal);
+    }
+  });
+}
 
 function renderFileModeWarning() {
   toolGrid.innerHTML = "";
@@ -350,8 +450,8 @@ function resizeTerminal() {
 }
 
 function setTerminalHeight(height) {
-  const minHeight = window.innerWidth <= 980 ? 360 : 380;
-  const maxHeight = Math.max(minHeight, Math.floor(window.innerHeight - 140));
+  const minHeight = 160;
+  const maxHeight = Math.max(minHeight, Math.floor(window.innerHeight - 200));
   const nextHeight = Math.min(Math.max(Number(height) || terminalHeights.medium, minHeight), maxHeight);
   terminalPanel.style.setProperty("--terminal-panel-height", `${nextHeight}px`);
   localStorage.setItem("openspecTerminalHeight", String(nextHeight));
@@ -387,14 +487,14 @@ function initTerminal() {
   term = new Terminal({
     cursorBlink: true,
     convertEol: true,
-    fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
+    fontFamily: '"JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace',
     fontSize: 13,
     lineHeight: 1.35,
     theme: {
-      background: "#111827",
-      foreground: "#d7f9e5",
-      cursor: "#ffffff",
-      selectionBackground: "#314158"
+      background: "#ffffff",
+      foreground: "#0b1c30",
+      cursor: "#4648d4",
+      selectionBackground: "#dbe2ff"
     }
   });
   fitAddon = new FitAddon.FitAddon();

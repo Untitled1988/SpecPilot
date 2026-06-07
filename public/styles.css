@@ -1,257 +1,445 @@
 :root {
   color-scheme: light;
-  --bg: #f6f7f9;
+  --bg: #f6f8fc;
   --panel: #ffffff;
-  --ink: #17202a;
-  --muted: #637083;
-  --line: #dde3ea;
-  --green: #147d55;
-  --green-bg: #e8f6ef;
-  --red: #ba2d2d;
-  --red-bg: #fff0f0;
-  --blue: #1d5fd1;
-  --blue-bg: #eef5ff;
-  --terminal: #111827;
-  --terminal-ink: #d7f9e5;
+  --panel-low: #f8fafc;
+  --panel-lowest: #f1f5f9;
+  --panel-high: #eef2ff;
+  --panel-highest: #e6ebf6;
+  --ink: #0b1c30;
+  --muted: #464554;
+  --faint: #94a3b8;
+  --line: #e2e8f0;
+  --green: #10b981;
+  --green-bg: rgba(16, 185, 129, 0.12);
+  --red: #dc2626;
+  --red-bg: rgba(220, 38, 38, 0.1);
+  --blue: #4648d4;
+  --blue-bg: rgba(70, 72, 212, 0.08);
+  --primary: #4648d4;
+  --on-primary: #ffffff;
+  --primary-hover: #2f2ebe;
+  --tertiary: #f59e0b;
+  --terminal: #ffffff;
+  --terminal-ink: #0b1c30;
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --sidebar-width: 260px;
+  --topbar-height: 60px;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-button {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--ink);
-  cursor: pointer;
-  min-height: 42px;
-  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
-}
-
-button:hover {
-  border-color: #9fb1c5;
-  transform: translateY(-1px);
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-}
-
-.topbar {
+  font-size: 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 28px 32px 18px;
+  overflow: hidden;
 }
 
 h1,
 h2,
+h3,
+h4,
 p {
   margin: 0;
 }
 
-h1 {
-  font-size: clamp(28px, 4vw, 44px);
-  line-height: 1.05;
+button,
+input,
+select {
+  font: inherit;
 }
 
-h2 {
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
   font-size: 20px;
+  line-height: 1;
+  flex: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--panel-highest);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--faint);
+}
+
+/* ---------- 通用按钮 ---------- */
+.primaryBtn,
+.ghostBtn,
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 38px;
+  padding: 0 14px;
+  font-weight: 600;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.primaryBtn {
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid var(--primary);
+}
+
+.primaryBtn:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ghostBtn {
+  background: var(--panel-high);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.ghostBtn:hover {
+  border-color: var(--primary);
+  background: var(--panel-highest);
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 0 8px;
+  min-height: 34px;
+}
+
+.iconBtn:hover {
+  background: var(--panel-highest);
+  color: var(--ink);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
 }
 
 .eyebrow {
-  color: var(--blue);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0;
-  margin-bottom: 8px;
+  color: var(--primary);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr);
-  gap: 18px;
-  align-items: start;
-  padding: 0 32px 32px;
-}
-
-.leftColumn {
-  display: grid;
-  gap: 18px;
-  align-self: start;
-}
-
-.panel,
-.terminalPanel {
+/* ---------- 侧边栏 ---------- */
+.sidebar {
+  width: var(--sidebar-width);
+  flex: none;
+  height: 100vh;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
 }
 
-.panel {
-  padding: 22px;
-  align-self: start;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px;
 }
 
-.terminalPanel {
-  grid-column: 2;
-  grid-row: 1;
-  height: var(--terminal-panel-height, 420px);
-  min-height: 380px;
-  align-self: start;
-  position: sticky;
-  top: 18px;
+.brandMark {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.brandMark .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.brand h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.brandVersion {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+
+.sideNav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 14px 12px 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.navItem:hover {
+  background: var(--panel-highest);
+  color: var(--ink);
+}
+
+.navItem.active {
+  background: var(--blue-bg);
+  border-left-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.sideStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 12px;
+}
+
+.sideStatusEmpty {
+  color: var(--faint);
+  font-size: 13px;
+}
+
+.sideStatusItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sideStatusItem .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.sideStatusItem .dot.ok {
+  background: var(--green);
+}
+
+.sideStatusItem .dot.bad {
+  background: var(--tertiary);
+}
+
+.sideStatusName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.sideStatusTag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.sideStatusTag.install {
+  color: var(--primary);
+  cursor: pointer;
+  background: var(--blue-bg);
+  border: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sideStatusTag.install:hover {
+  background: rgba(173, 198, 255, 0.2);
+}
+
+.sideFooter {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.sideFooterBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.sideFooterBtn:hover {
+  background: var(--primary-hover);
+  color: #fff;
+}
+
+/* ---------- 主区域 ---------- */
+.main {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-.sectionTitle {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-}
-
-.sectionTitle > span {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--blue-bg);
-  color: var(--blue);
-  font-weight: 800;
+.topbar {
+  height: var(--topbar-height);
   flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
 }
 
-.sectionTitle p,
-.toolCard p,
-.quickGrid small,
-.steps {
-  color: var(--muted);
+.topbarLeft,
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.toolGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.toolCard {
+.workspaceField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-lowest);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
-  min-height: 136px;
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  height: 38px;
+  min-width: 280px;
+}
+
+.workspaceField .material-symbols-outlined {
+  color: var(--faint);
+  font-size: 18px;
+}
+
+.workspaceField input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.workspaceField input:focus {
+  outline: none;
+}
+
+/* ---------- 内容滚动区 ---------- */
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 28px;
 }
 
-.toolTop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+.view {
+  scroll-margin-top: 16px;
 }
 
-.toolName {
-  font-weight: 800;
+.viewHead {
+  margin-bottom: 16px;
 }
 
-.badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
+.viewHead h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-.badge.ok {
-  color: var(--green);
-  background: var(--green-bg);
-}
-
-.badge.bad {
-  color: var(--red);
-  background: var(--red-bg);
-}
-
-.toolCard code,
-.steps code {
-  background: #f0f3f7;
-  border: 1px solid #e0e5eb;
-  border-radius: 6px;
-  padding: 2px 5px;
-}
-
-.installBtn {
-  width: 100%;
-  background: var(--blue);
-  color: #fff;
-  border-color: var(--blue);
-}
-
-.workspaceBox {
-  display: grid;
-  gap: 10px;
-}
-
-.workspaceBox label {
+.viewSub {
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.workspaceControls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 82px 82px;
-  gap: 10px;
-}
-
-.workspaceControls input {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  min-height: 42px;
-  padding: 0 12px;
-}
-
-.workspaceHint {
-  color: var(--muted);
-  font-size: 13px;
+  margin-top: 4px;
   overflow-wrap: anywhere;
 }
 
-.quickGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
+/* ---------- 初始化向导 ---------- */
 .initWizard {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 14px;
+  border-radius: var(--radius);
+  padding: 18px;
   display: grid;
-  gap: 16px;
-  background: #fbfcfe;
+  gap: 18px;
+  background: var(--panel);
+  box-shadow: 0 1px 2px rgba(11, 28, 48, 0.04);
 }
 
 .initHeader {
@@ -262,8 +450,8 @@ h2 {
 }
 
 .initHeader h3 {
-  margin: 0 0 6px;
   font-size: 18px;
+  margin-bottom: 6px;
 }
 
 .initHeader p,
@@ -273,17 +461,13 @@ h2 {
   color: var(--muted);
 }
 
-.initHeader button {
-  background: var(--blue);
-  border-color: var(--blue);
-  color: #fff;
-  padding: 0 14px;
+.initHeader .primaryBtn {
   flex: none;
 }
 
 .initGroup {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .initGroupTitle {
@@ -295,108 +479,307 @@ h2 {
 
 .toolPicker {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 .choiceCard {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--panel-high);
   padding: 12px;
-  min-height: 82px;
+  min-height: 78px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
   cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.choiceCard:hover {
+  border-color: var(--primary);
 }
 
 .choiceCard:has(input:checked) {
-  border-color: #8bb7f0;
+  border-color: var(--primary);
   background: var(--blue-bg);
 }
 
 .choiceCard input {
   margin-top: 3px;
+  accent-color: var(--primary);
 }
 
 .choiceCard span {
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 
 .choiceCard.recommended strong::after {
   content: " 推荐";
-  color: var(--blue);
+  color: var(--primary);
   font-size: 12px;
 }
 
 .initOptions {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
-.initOptions label {
+.initOptions > label {
   display: grid;
   gap: 7px;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .initOptions select {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  min-height: 42px;
+  border-radius: var(--radius-sm);
+  min-height: 40px;
   padding: 0 12px;
-  background: #fff;
+  background: var(--panel-lowest);
   color: var(--ink);
 }
 
 .toggleLine {
   display: flex !important;
   align-items: center;
+  gap: 8px;
   grid-template-columns: none;
   flex-direction: row;
+  font-weight: 500 !important;
+}
+
+.toggleLine input {
+  accent-color: var(--primary);
 }
 
 .commandPreview {
-  border: 1px solid #d7e4f8;
-  border-radius: 8px;
-  background: var(--blue-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-lowest);
   padding: 10px 12px;
   display: grid;
   gap: 6px;
 }
 
+.commandPreview span {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .commandPreview code {
+  font-family: var(--mono);
+  color: var(--primary);
   overflow-wrap: anywhere;
   line-height: 1.55;
 }
 
+/* ---------- 环境检查卡片 ---------- */
+.toolGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.toolCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 140px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 2px rgba(11, 28, 48, 0.04);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.toolCard:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(70, 72, 212, 0.08);
+}
+
+.toolTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.toolName {
+  font-weight: 700;
+}
+
+.toolCard p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.badge {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  flex: none;
+}
+
+.badge.ok {
+  color: var(--green);
+  background: var(--green-bg);
+}
+
+.badge.bad {
+  color: var(--tertiary);
+  background: rgba(255, 185, 95, 0.12);
+}
+
+.toolCard code {
+  background: var(--panel-lowest);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--primary);
+  overflow-wrap: anywhere;
+}
+
+.installBtn {
+  width: 100%;
+  min-height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.installBtn:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #fff;
+}
+
+/* ---------- 常用操作 ---------- */
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
 .quickGrid button {
   text-align: left;
-  padding: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 94px;
-  font-weight: 800;
+  min-height: 108px;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(11, 28, 48, 0.04);
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.quickGrid button:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(70, 72, 212, 0.1);
+}
+
+.quickGrid button .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 26px;
 }
 
 .quickGrid small {
+  color: var(--muted);
   font-weight: 500;
   line-height: 1.45;
 }
 
+/* ---------- 新手指引 ---------- */
 .steps {
   margin: 0;
-  padding-left: 22px;
-  line-height: 1.8;
+  padding: 4px 0 4px 22px;
+  line-height: 1.85;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 18px 18px 18px 40px;
+}
+
+.steps code {
+  background: var(--panel-lowest);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 2px 5px;
+  font-family: var(--mono);
+  color: var(--primary);
+}
+
+/* ---------- 底部终端 ---------- */
+.terminalPanel {
+  flex: none;
+  height: var(--terminal-panel-height, 320px);
+  min-height: 160px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 -4px 12px rgba(11, 28, 48, 0.04);
+}
+
+.terminalPanel.collapsed {
+  height: auto !important;
+  min-height: 0;
+}
+
+.terminalPanel.collapsed .terminalResizeHandle,
+.terminalPanel.collapsed .terminal,
+.terminalPanel.collapsed .commandForm {
+  display: none;
+}
+
+.terminalResizeHandle {
+  height: 10px;
+  flex: none;
+  cursor: ns-resize;
+  position: relative;
+  background: var(--panel-lowest);
+}
+
+.terminalResizeHandle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 56px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--faint);
+  transform: translateX(-50%);
 }
 
 .terminalHeader {
-  padding: 18px 18px 12px;
+  padding: 6px 14px;
+  background: var(--panel-high);
   border-bottom: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
@@ -404,26 +787,42 @@ h2 {
   gap: 12px;
 }
 
+.terminalTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.terminalTitle .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--faint);
+}
+
 .terminalActions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  gap: 8px;
 }
 
 .terminalStatus {
-  border: 1px solid #e4c86f;
+  border: 1px solid var(--tertiary);
   border-radius: 999px;
-  background: #fff7db;
-  color: #7a5600;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 5px 9px;
+  background: rgba(255, 185, 95, 0.12);
+  color: var(--tertiary);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
 }
 
 .terminalStatus.ok {
-  border-color: #acd8bf;
+  border-color: var(--green);
   background: var(--green-bg);
   color: var(--green);
 }
@@ -431,47 +830,33 @@ h2 {
 .terminalSizeButtons {
   display: flex;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .terminalSizeButtons button {
-  min-height: 32px;
+  min-height: 30px;
   border: 0;
   border-right: 1px solid var(--line);
-  border-radius: 0;
-  padding: 0 10px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.terminalSizeButtons button:hover {
+  background: var(--panel-highest);
+  color: var(--ink);
 }
 
 .terminalSizeButtons button:last-child {
   border-right: 0;
 }
 
-.commandForm {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px;
-  gap: 10px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--line);
-}
-
-.commandForm input {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  min-height: 42px;
-  padding: 0 12px;
-}
-
-.commandForm button {
-  background: #17202a;
-  color: #fff;
-  border-color: #17202a;
-}
-
 .terminal {
   flex: 1;
   min-height: 0;
-  padding: 10px;
+  padding: 10px 12px;
   background: var(--terminal);
   color: var(--terminal-ink);
   overflow: auto;
@@ -485,25 +870,41 @@ h2 {
   overflow-y: auto;
 }
 
-.terminalResizeHandle {
-  height: 12px;
-  border-top: 1px solid #283548;
-  background: linear-gradient(to bottom, #17202a, #111827);
-  cursor: ns-resize;
-  flex: none;
-  position: relative;
+.commandForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--panel-high);
 }
 
-.terminalResizeHandle::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 4px;
-  width: 56px;
-  height: 3px;
-  border-radius: 999px;
-  background: #637083;
-  transform: translateX(-50%);
+.commandPrompt {
+  font-family: var(--mono);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.commandForm input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  min-height: 38px;
+  padding: 0 12px;
+  background: var(--panel-lowest);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.commandForm input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.commandForm .primaryBtn {
+  flex: none;
 }
 
 .resizingTerminal {
@@ -511,17 +912,19 @@ h2 {
   user-select: none;
 }
 
+/* ---------- 目录选择弹窗 ---------- */
 .directoryDialog {
   width: min(760px, calc(100vw - 32px));
   max-height: min(720px, calc(100vh - 32px));
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0;
+  background: var(--panel);
   color: var(--ink);
 }
 
 .directoryDialog::backdrop {
-  background: rgba(17, 24, 39, 0.38);
+  background: rgba(6, 14, 32, 0.62);
 }
 
 .dialogHeader,
@@ -538,13 +941,17 @@ h2 {
   border-bottom: 1px solid var(--line);
 }
 
+.dialogHeader h2 {
+  font-size: 20px;
+}
+
 .directoryPath {
   margin: 14px 18px 0;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f7f9fb;
+  border-radius: var(--radius-sm);
+  background: var(--panel-lowest);
   padding: 10px 12px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-family: var(--mono);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -555,27 +962,33 @@ h2 {
   flex-wrap: wrap;
 }
 
-.directoryActions button,
-.directoryRoots button,
-.directoryList button {
-  padding: 0 12px;
-}
-
 .directoryList {
   margin: 14px 18px 18px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   max-height: 420px;
   overflow: auto;
   display: grid;
+}
+
+.directoryList button,
+.directoryRoots button {
+  text-align: left;
 }
 
 .directoryList button {
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
-  text-align: left;
   min-height: 42px;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.directoryList button:hover {
+  background: var(--panel-high);
 }
 
 .directoryList button:last-child {
@@ -592,56 +1005,51 @@ h2 {
 }
 
 .stderr {
-  color: #ffb4b4;
+  color: var(--red);
 }
 
-@media (max-width: 980px) {
-  .topbar,
-  .layout {
-    padding-left: 18px;
-    padding-right: 18px;
+/* ---------- 响应式 ---------- */
+@media (max-width: 920px) {
+  body {
+    overflow: auto;
   }
 
-  .layout {
-    grid-template-columns: 1fr;
+  .sidebar {
+    display: none;
   }
 
-  .leftColumn,
-  .terminalPanel {
-    grid-column: 1;
+  .main {
+    height: auto;
+    min-height: 100vh;
   }
 
-  .terminalPanel {
-    grid-row: auto;
-    height: var(--terminal-panel-height, 420px);
-    min-height: 360px;
-    position: static;
+  .toolPicker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
   .topbar {
-    align-items: flex-start;
+    height: auto;
     flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 10px;
   }
 
-  .toolGrid,
+  .workspaceField {
+    min-width: 0;
+  }
+
   .toolPicker,
+  .toolGrid,
   .quickGrid {
     grid-template-columns: 1fr;
   }
 
   .initHeader,
   .initGroupTitle {
-    align-items: stretch;
     flex-direction: column;
-  }
-
-  .commandForm {
-    grid-template-columns: 1fr;
-  }
-
-  .workspaceControls {
-    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 }
