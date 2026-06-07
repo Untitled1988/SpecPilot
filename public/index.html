@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpecPilot 规格领航</title>
+    <link rel="stylesheet" href="vendor/xterm.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">OpenSpec + GitHub Copilot CLI</p>
+        <h1>SpecPilot 规格领航</h1>
+      </div>
+      <button id="refreshBtn" class="iconText">重新检测</button>
+    </header>
+
+    <main class="layout">
+      <div class="leftColumn">
+        <section class="panel workspace">
+          <div class="sectionTitle">
+            <span>0</span>
+            <div>
+              <h2>工作目录</h2>
+              <p>选择要管理的项目文件夹，终端和 OpenSpec 命令都会在这里运行。</p>
+            </div>
+          </div>
+          <div class="workspaceBox">
+            <label for="workspaceInput">当前项目文件夹</label>
+            <div class="workspaceControls">
+              <input id="workspaceInput" autocomplete="off" />
+              <button id="chooseWorkspaceBtn" type="button">选择</button>
+              <button id="applyWorkspaceBtn" type="button">切换</button>
+            </div>
+            <p id="workspaceHint" class="workspaceHint">正在读取工作目录...</p>
+          </div>
+        </section>
+
+        <section class="panel setup">
+          <div class="sectionTitle">
+            <span>1</span>
+            <div>
+              <h2>环境检查</h2>
+              <p>先确认电脑里有没有必需工具。缺什么，点一下安装。</p>
+            </div>
+          </div>
+          <div id="toolGrid" class="toolGrid"></div>
+        </section>
+
+        <section class="panel quick">
+          <div class="sectionTitle">
+            <span>2</span>
+            <div>
+              <h2>初始化与常用操作</h2>
+              <p>先用推荐配置初始化项目，后续再用常用命令查看和校验。</p>
+            </div>
+          </div>
+
+          <div class="initWizard">
+            <div class="initHeader">
+              <div>
+                <h3>初始化项目</h3>
+                <p>默认适合 GitHub Copilot 用户，不需要自己记命令。</p>
+              </div>
+              <button id="runInitBtn" type="button">按所选配置初始化</button>
+            </div>
+
+            <div class="initGroup">
+              <div class="initGroupTitle">
+                <strong>选择 AI 工具</strong>
+                <span>会生成对应的斜杠命令或技能文件</span>
+              </div>
+              <div class="toolPicker" id="initToolPicker">
+                <label class="choiceCard recommended">
+                  <input type="checkbox" value="github-copilot" checked />
+                  <span>
+                    <strong>GitHub Copilot</strong>
+                    <small>使用 GitHub Copilot 时勾选</small>
+                  </span>
+                </label>
+                <label class="choiceCard">
+                  <input type="checkbox" value="codex" />
+                  <span>
+                    <strong>Codex</strong>
+                    <small>使用 Codex 时勾选</small>
+                  </span>
+                </label>
+                <label class="choiceCard">
+                  <input type="checkbox" value="cursor" />
+                  <span>
+                    <strong>Cursor</strong>
+                    <small>使用 Cursor 时勾选</small>
+                  </span>
+                </label>
+                <label class="choiceCard">
+                  <input type="checkbox" value="claude" />
+                  <span>
+                    <strong>Claude Code</strong>
+                    <small>使用 Claude Code 时勾选</small>
+                  </span>
+                </label>
+                <label class="choiceCard">
+                  <input type="checkbox" value="windsurf" />
+                  <span>
+                    <strong>Windsurf</strong>
+                    <small>使用 Windsurf 时勾选</small>
+                  </span>
+                </label>
+                <label class="choiceCard">
+                  <input type="checkbox" value="opencode" />
+                  <span>
+                    <strong>OpenCode</strong>
+                    <small>使用 OpenCode 时勾选</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="initOptions">
+              <label>
+                <span>工作流配置</span>
+                <select id="initProfileSelect">
+                  <option value="core" selected>核心流程：提案、探索、执行、同步、归档</option>
+                  <option value="full">完整流程：包含新建、继续、快速执行、验证、批量归档、上手引导</option>
+                </select>
+              </label>
+              <label class="toggleLine">
+                <input id="initForceCheckbox" type="checkbox" checked />
+                <span>自动处理旧版 OpenSpec 文件，减少弹窗确认</span>
+              </label>
+            </div>
+
+            <div class="commandPreview">
+              <span>将执行</span>
+              <code id="initCommandPreview">openspec init --tools github-copilot --profile core --force</code>
+            </div>
+          </div>
+
+        <div class="quickGrid">
+          <button data-command="openspec update" data-title="更新 OpenSpec AI 命令">
+            更新命令
+            <small>切换工具或调整工作流后，同步最新提示词和斜杠命令</small>
+          </button>
+          <button data-command="openspec view" data-title="打开 OpenSpec 仪表盘">
+            打开仪表盘
+            <small>用交互界面浏览 specs 和 changes</small>
+          </button>
+          <button data-command="openspec instructions explore" data-title="查看 Explore 指引">
+            探索想法
+            <small>正式提案前，查看如何让 AI 先帮你梳理思路</small>
+          </button>
+          <button data-command="openspec list" data-title="查看 OpenSpec 变更">
+            查看变更
+            <small>列出当前活跃的 changes</small>
+          </button>
+          <button data-command="openspec list --specs" data-title="查看 OpenSpec 规格">
+            查看规格
+            <small>列出当前已经沉淀下来的系统规格</small>
+          </button>
+          <button data-command="openspec validate --all" data-title="校验全部规格">
+            一键校验
+            <small>检查 specs 和 changes 是否规范</small>
+          </button>
+          <button data-command="openspec archive" data-title="归档已完成变更">
+            归档变更
+            <small>完成开发后，把变更合并进正式规格并归档</small>
+          </button>
+          <button data-command="copilot" data-title="启动 GitHub Copilot CLI">
+            打开 Copilot
+            <small>进入 Copilot CLI 交互入口</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel guide">
+          <div class="sectionTitle">
+            <span>3</span>
+            <div>
+              <h2>给新手的流程</h2>
+              <p>照着这几步走。</p>
+            </div>
+        </div>
+        <ol class="steps">
+          <li>需求还不清楚时，在 IDE 聊天里使用 <code>/opsx:explore</code>，让 AI 帮你梳理目标、边界和风险。</li>
+          <li>想清楚后使用 <code>/opsx:propose</code> 描述你要做的需求，让 AI 生成 proposal、tasks 和 spec delta。</li>
+          <li>回到本页面点“查看变更”或“打开仪表盘”，确认变更已经生成；不放心时点“一键校验”。</li>
+          <li>让 Copilot 执行 <code>/opsx:apply</code>，它会按 tasks 实现代码；完成后再点“一键校验”检查格式和结构。</li>
+          <li>确认功能完成后，先用 <code>/opsx:sync</code> 同步规格，再点“归档变更”或使用 <code>/opsx:archive</code>，把完成的 change 移入 archive。</li>
+        </ol>
+        </section>
+
+      </div>
+
+      <section class="terminalPanel">
+        <div class="terminalHeader">
+          <div>
+            <p class="eyebrow">真实终端</p>
+            <h2>系统 Shell</h2>
+          </div>
+          <div class="terminalActions">
+            <span id="terminalStatus" class="terminalStatus">连接中</span>
+            <div class="terminalSizeButtons" aria-label="终端高度">
+              <button type="button" data-terminal-size="compact">小</button>
+              <button type="button" data-terminal-size="medium">中</button>
+              <button type="button" data-terminal-size="large">大</button>
+            </div>
+            <button id="clearBtn">清空</button>
+          </div>
+        </div>
+        <form id="commandForm" class="commandForm">
+          <input id="commandInput" autocomplete="off" placeholder="输入命令，例如 openspec --version" />
+          <button type="submit">发送</button>
+        </form>
+        <div id="terminal" class="terminal" aria-label="真实终端"></div>
+        <div id="terminalResizeHandle" class="terminalResizeHandle" role="separator" aria-label="拖动调整终端高度"></div>
+      </section>
+    </main>
+
+    <dialog id="directoryDialog" class="directoryDialog">
+      <div class="dialogHeader">
+        <div>
+          <p class="eyebrow">选择文件夹</p>
+          <h2>工作目录</h2>
+        </div>
+        <button id="closeDirectoryBtn" type="button">关闭</button>
+      </div>
+      <div class="directoryPath" id="directoryCurrent"></div>
+      <div class="directoryActions">
+        <button id="parentDirectoryBtn" type="button">上一级</button>
+        <button id="homeDirectoryBtn" type="button">用户目录</button>
+        <button id="selectDirectoryBtn" type="button">使用此目录</button>
+      </div>
+      <div id="directoryRoots" class="directoryRoots"></div>
+      <div id="directoryList" class="directoryList"></div>
+    </dialog>
+
+    <script src="vendor/xterm.js"></script>
+    <script src="vendor/xterm-fit.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

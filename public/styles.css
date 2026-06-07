@@ -1,0 +1,647 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --ink: #17202a;
+  --muted: #637083;
+  --line: #dde3ea;
+  --green: #147d55;
+  --green-bg: #e8f6ef;
+  --red: #ba2d2d;
+  --red-bg: #fff0f0;
+  --blue: #1d5fd1;
+  --blue-bg: #eef5ff;
+  --terminal: #111827;
+  --terminal-ink: #d7f9e5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  min-height: 42px;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+button:hover {
+  border-color: #9fb1c5;
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 28px 32px 18px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+.eyebrow {
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-bottom: 8px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr);
+  gap: 18px;
+  align-items: start;
+  padding: 0 32px 32px;
+}
+
+.leftColumn {
+  display: grid;
+  gap: 18px;
+  align-self: start;
+}
+
+.panel,
+.terminalPanel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.panel {
+  padding: 22px;
+  align-self: start;
+}
+
+.terminalPanel {
+  grid-column: 2;
+  grid-row: 1;
+  height: var(--terminal-panel-height, 420px);
+  min-height: 380px;
+  align-self: start;
+  position: sticky;
+  top: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sectionTitle {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.sectionTitle > span {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-weight: 800;
+  flex: none;
+}
+
+.sectionTitle p,
+.toolCard p,
+.quickGrid small,
+.steps {
+  color: var(--muted);
+}
+
+.toolGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.toolCard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 136px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toolTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.toolName {
+  font-weight: 800;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge.ok {
+  color: var(--green);
+  background: var(--green-bg);
+}
+
+.badge.bad {
+  color: var(--red);
+  background: var(--red-bg);
+}
+
+.toolCard code,
+.steps code {
+  background: #f0f3f7;
+  border: 1px solid #e0e5eb;
+  border-radius: 6px;
+  padding: 2px 5px;
+}
+
+.installBtn {
+  width: 100%;
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+
+.workspaceBox {
+  display: grid;
+  gap: 10px;
+}
+
+.workspaceBox label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.workspaceControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82px 82px;
+  gap: 10px;
+}
+
+.workspaceControls input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.workspaceHint {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.initWizard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: grid;
+  gap: 16px;
+  background: #fbfcfe;
+}
+
+.initHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.initHeader h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.initHeader p,
+.initGroupTitle span,
+.choiceCard small,
+.commandPreview span {
+  color: var(--muted);
+}
+
+.initHeader button {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+  padding: 0 14px;
+  flex: none;
+}
+
+.initGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.initGroupTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolPicker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.choiceCard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  min-height: 82px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.choiceCard:has(input:checked) {
+  border-color: #8bb7f0;
+  background: var(--blue-bg);
+}
+
+.choiceCard input {
+  margin-top: 3px;
+}
+
+.choiceCard span {
+  display: grid;
+  gap: 5px;
+}
+
+.choiceCard.recommended strong::after {
+  content: " 推荐";
+  color: var(--blue);
+  font-size: 12px;
+}
+
+.initOptions {
+  display: grid;
+  gap: 10px;
+}
+
+.initOptions label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.initOptions select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.toggleLine {
+  display: flex !important;
+  align-items: center;
+  grid-template-columns: none;
+  flex-direction: row;
+}
+
+.commandPreview {
+  border: 1px solid #d7e4f8;
+  border-radius: 8px;
+  background: var(--blue-bg);
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.commandPreview code {
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.quickGrid button {
+  text-align: left;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 94px;
+  font-weight: 800;
+}
+
+.quickGrid small {
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 22px;
+  line-height: 1.8;
+}
+
+.terminalHeader {
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.terminalActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.terminalStatus {
+  border: 1px solid #e4c86f;
+  border-radius: 999px;
+  background: #fff7db;
+  color: #7a5600;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 9px;
+}
+
+.terminalStatus.ok {
+  border-color: #acd8bf;
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.terminalSizeButtons {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.terminalSizeButtons button {
+  min-height: 32px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0 10px;
+}
+
+.terminalSizeButtons button:last-child {
+  border-right: 0;
+}
+
+.commandForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.commandForm input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.commandForm button {
+  background: #17202a;
+  color: #fff;
+  border-color: #17202a;
+}
+
+.terminal {
+  flex: 1;
+  min-height: 0;
+  padding: 10px;
+  background: var(--terminal);
+  color: var(--terminal-ink);
+  overflow: auto;
+}
+
+.terminal .xterm {
+  height: 100%;
+}
+
+.terminal .xterm-viewport {
+  overflow-y: auto;
+}
+
+.terminalResizeHandle {
+  height: 12px;
+  border-top: 1px solid #283548;
+  background: linear-gradient(to bottom, #17202a, #111827);
+  cursor: ns-resize;
+  flex: none;
+  position: relative;
+}
+
+.terminalResizeHandle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  width: 56px;
+  height: 3px;
+  border-radius: 999px;
+  background: #637083;
+  transform: translateX(-50%);
+}
+
+.resizingTerminal {
+  cursor: ns-resize;
+  user-select: none;
+}
+
+.directoryDialog {
+  width: min(760px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 32px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0;
+  color: var(--ink);
+}
+
+.directoryDialog::backdrop {
+  background: rgba(17, 24, 39, 0.38);
+}
+
+.dialogHeader,
+.directoryActions,
+.directoryRoots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dialogHeader {
+  justify-content: space-between;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.directoryPath {
+  margin: 14px 18px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f9fb;
+  padding: 10px 12px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.directoryActions,
+.directoryRoots {
+  padding: 12px 18px 0;
+  flex-wrap: wrap;
+}
+
+.directoryActions button,
+.directoryRoots button,
+.directoryList button {
+  padding: 0 12px;
+}
+
+.directoryList {
+  margin: 14px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 420px;
+  overflow: auto;
+  display: grid;
+}
+
+.directoryList button {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  text-align: left;
+  min-height: 42px;
+}
+
+.directoryList button:last-child {
+  border-bottom: 0;
+}
+
+.emptyDirectory {
+  color: var(--muted);
+  padding: 18px;
+}
+
+.stdout {
+  color: var(--terminal-ink);
+}
+
+.stderr {
+  color: #ffb4b4;
+}
+
+@media (max-width: 980px) {
+  .topbar,
+  .layout {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .leftColumn,
+  .terminalPanel {
+    grid-column: 1;
+  }
+
+  .terminalPanel {
+    grid-row: auto;
+    height: var(--terminal-panel-height, 420px);
+    min-height: 360px;
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .toolGrid,
+  .toolPicker,
+  .quickGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .initHeader,
+  .initGroupTitle {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .commandForm {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceControls {
+    grid-template-columns: 1fr;
+  }
+}
