@@ -1,4 +1,3 @@
-const toolGrid = document.querySelector("#toolGrid");
 const terminal = document.querySelector("#terminal");
 const commandForm = document.querySelector("#commandForm");
 const commandInput = document.querySelector("#commandInput");
@@ -84,40 +83,6 @@ function renderStatus(status) {
   renderWorkspace(status.workspace);
   const order = ["node", "npm", "openspec", "copilot"];
   renderSidebarStatus(status, order);
-  toolGrid.innerHTML = "";
-  for (const key of order) {
-    const tool = status.tools[key];
-    const meta = toolLabels[key];
-    const card = document.createElement("article");
-    card.className = "toolCard";
-
-    const top = document.createElement("div");
-    top.className = "toolTop";
-    const copy = document.createElement("div");
-    const name = document.createElement("div");
-    name.className = "toolName";
-    name.textContent = meta.name;
-    const desc = document.createElement("p");
-    desc.textContent = meta.desc;
-    const badge = document.createElement("span");
-    badge.className = `badge ${tool.ok ? "ok" : "bad"}`;
-    badge.textContent = tool.ok ? "正常" : "缺失";
-    const version = document.createElement("code");
-    version.textContent = tool.version || tool.message || "未检测到版本";
-
-    copy.append(name, desc);
-    top.append(copy, badge);
-    card.append(top, version);
-
-    if (!tool.ok && meta.install) {
-      const btn = document.createElement("button");
-      btn.className = "installBtn";
-      btn.textContent = `自动安装 ${meta.name}`;
-      btn.addEventListener("click", () => install(meta.install, btn));
-      card.append(btn);
-    }
-    toolGrid.append(card);
-  }
 }
 
 function renderSidebarStatus(status, order) {
@@ -421,16 +386,13 @@ if (toggleTerminalBtn) {
 }
 
 function renderFileModeWarning() {
-  toolGrid.innerHTML = "";
-  const card = document.createElement("article");
-  card.className = "toolCard";
-  const title = document.createElement("div");
-  title.className = "toolName";
-  title.textContent = "需要先启动本地服务";
-  const desc = document.createElement("p");
-  desc.textContent = "当前是直接打开 HTML 文件，浏览器不能调用本机命令接口。请在项目目录运行 npm run dev，然后访问 http://127.0.0.1:4317。";
-  card.append(title, desc);
-  toolGrid.append(card);
+  if (sidebarStatus) {
+    sidebarStatus.innerHTML = "";
+    const tip = document.createElement("p");
+    tip.className = "sideStatusEmpty";
+    tip.textContent = "请改用 http://127.0.0.1:4317 访问";
+    sidebarStatus.append(tip);
+  }
   append(`[${stamp()}] 当前是 file:// 打开方式，请改用 http://127.0.0.1:4317。\n`, "stderr");
 }
 

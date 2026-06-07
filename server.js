@@ -55,10 +55,29 @@ function runCheck(name, spec) {
     const child = spawn(spec.command, spec.args, {
       cwd: currentWorkspace,
       env: process.env,
-      shell: false
+      shell: false,
+      stdio: ["ignore", "pipe", "pipe"]
     });
     let output = "";
     let error = "";
+    let settled = false;
+
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve({ ...result, durationMs: Date.now() - startedAt });
+    };
+
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      finish({
+        name,
+        ok: false,
+        version: "",
+        message: "检测超时，命令未在限定时间内返回"
+      });
+    }, 8000);
 
     child.stdout.on("data", (chunk) => {
       output += chunk.toString();
@@ -67,21 +86,24 @@ function runCheck(name, spec) {
       error += chunk.toString();
     });
     child.on("error", (err) => {
-      resolve({
+      finish({
         name,
         ok: false,
         version: "",
-        message: err.code === "ENOENT" ? "未找到命令" : err.message,
-        durationMs: Date.now() - startedAt
+        message: err.code === "ENOENT" ? "未找到命令" : err.message
       });
     });
     child.on("close", (code) => {
-      resolve({
+      const firstLine = output.trim().split("\n")[0] || "";
+      const versionMatch = firstLine.match(/v?\d+\.\d+(?:\.\d+)*/);
+      const versionLike = Boolean(versionMatch);
+      finish({
         name,
-        ok: code === 0,
-        version: output.trim().split("\n")[0] || "",
-        message: code === 0 ? "已安装" : (error.trim() || output.trim() || `退出码 ${code}`),
-        durationMs: Date.now() - startedAt
+        ok: code === 0 && versionLike,
+        version: versionMatch ? versionMatch[0] : "",
+        message: code === 0 && versionLike
+          ? "已安装"
+          : (error.trim() || (code === 0 ? "未检测到有效版本，可能尚未安装" : output.trim() || `退出码 ${code}`))
       });
     });
   });
