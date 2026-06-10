@@ -4,7 +4,12 @@ const path = require("node:path");
 const os = require("node:os");
 const { spawn } = require("node:child_process");
 const { WebSocketServer } = require("ws");
-const pty = require("node-pty");
+let pty;
+try {
+  pty = require("@homebridge/node-pty-prebuilt-multiarch");
+} catch {
+  pty = require("node-pty");
+}
 
 const PORT = Number(process.env.PORT || 4317);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -47,7 +52,8 @@ function sendEvent(event, data) {
 function runCheck(name, spec) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
-    const child = spawn(spec.command, spec.args, {
+    const commandLine = [spec.command, ...spec.args].join(" ");
+    const child = spawn(commandLine, {
       cwd: currentWorkspace,
       env: process.env,
       shell: true,
