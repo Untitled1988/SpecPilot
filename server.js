@@ -4,12 +4,24 @@ const path = require("node:path");
 const os = require("node:os");
 const { spawn } = require("node:child_process");
 const { WebSocketServer } = require("ws");
-let pty;
-try {
-  pty = require("@homebridge/node-pty-prebuilt-multiarch");
-} catch {
-  pty = require("node-pty");
+
+function loadPty() {
+  const packages = process.platform === "win32"
+    ? ["node-pty", "@homebridge/node-pty-prebuilt-multiarch"]
+    : ["@homebridge/node-pty-prebuilt-multiarch", "node-pty"];
+
+  const errors = [];
+  for (const packageName of packages) {
+    try {
+      return require(packageName);
+    } catch (err) {
+      errors.push(`${packageName}: ${err.message}`);
+    }
+  }
+  throw new Error(`终端依赖加载失败。${errors.join(" | ")}`);
 }
+
+const pty = loadPty();
 
 const PORT = Number(process.env.PORT || 4317);
 const HOST = process.env.HOST || "127.0.0.1";
