@@ -1,12 +1,19 @@
-const terminal = document.querySelector("#terminal");
+const terminalPanes = {
+  openspec: document.querySelector("#terminalOpenSpec"),
+  copilot: document.querySelector("#terminalCopilot")
+};
 const commandForm = document.querySelector("#commandForm");
 const commandInput = document.querySelector("#commandInput");
+const commandPrompt = document.querySelector("#commandPrompt");
 const refreshBtn = document.querySelector("#refreshBtn");
 const clearBtn = document.querySelector("#clearBtn");
 const terminalStatus = document.querySelector("#terminalStatus");
 const terminalPanel = document.querySelector(".terminalPanel");
 const terminalResizeHandle = document.querySelector("#terminalResizeHandle");
 const terminalSizeButtons = document.querySelectorAll("[data-terminal-size]");
+const terminalTabs = document.querySelectorAll("[data-terminal-tab]");
+const terminalModeTitle = document.querySelector("#terminalModeTitle");
+const terminalModeDesc = document.querySelector("#terminalModeDesc");
 const workspaceInput = document.querySelector("#workspaceInput");
 const workspaceHint = document.querySelector("#workspaceHint");
 const chooseWorkspaceBtn = document.querySelector("#chooseWorkspaceBtn");
@@ -30,13 +37,40 @@ const viewSections = document.querySelectorAll(".view");
 const initShortcutBtn = document.querySelector("#initShortcutBtn");
 const toggleTerminalBtn = document.querySelector("#toggleTerminalBtn");
 const isFileMode = location.protocol === "file:";
-let socket = null;
-let term = null;
-let fitAddon = null;
+let activeTerminal = "openspec";
 let activeDirectory = "";
 let isResizingTerminal = false;
 let resizeStartY = 0;
 let resizeStartHeight = 0;
+
+const terminalSessions = {
+  openspec: {
+    label: "OpenSpec",
+    modeTitle: "OpenSpec 命令模式",
+    modeDesc: "这里运行 openspec、npm、git 等普通命令。",
+    prompt: "$",
+    placeholder: "输入 openspec、npm、git 命令",
+    socket: null,
+    term: null,
+    fitAddon: null,
+    connected: false
+  },
+  copilot: {
+    label: "Copilot",
+    modeTitle: "Copilot 斜杠命令模式",
+    modeDesc: "这里运行 copilot，并通过按钮发送 .github/skills 对应的斜杠命令。",
+    prompt: "/",
+    placeholder: "输入 /openspec-propose，或点击上方 Copilot 按钮",
+    socket: null,
+    term: null,
+    fitAddon: null,
+    connected: false,
+    booted: false,
+    starting: false,
+    pendingCommand: "",
+    outputBuffer: ""
+  }
+};
 
 const terminalHeights = {
   compact: 240,
@@ -71,12 +105,18 @@ function stamp() {
   return new Date().toLocaleTimeString("zh-CN", { hour12: false });
 }
 
-function append(text, className = "stdout") {
-  if (term) {
-    term.write(text.replace(/\n/g, "\r\n"));
+function getSession(channel = activeTerminal) {
+  return terminalSessions[channel] || terminalSessions.openspec;
+}
+
+function append(text, className = "stdout", channel = activeTerminal) {
+  const session = getSession(channel);
+  if (session.term) {
+    session.term.write(text.replace(/\n/g, "\r\n"));
     return;
   }
-  terminal.textContent += text;
+  const pane = terminalPanes[channel] || terminalPanes.openspec;
+  pane.textContent += text;
 }
 
 function renderStatus(status) {
@@ -174,7 +214,7 @@ async function applyWorkspace(dirPath) {
     }
     renderWorkspace(body.path);
     activeDirectory = body.path;
-    resetTerminal();
+    resetTerminals();
     refreshStatus();
   } catch (err) {
     workspaceHint.textContent = `切换失败：${err.message}`;
@@ -192,19 +232,87 @@ async function install(target, btn) {
     openspec: "npm install -g @fission-ai/openspec@latest",
     copilot: "npm install -g @github/copilot"
   };
-  runCommand(commands[target]);
+  runCommand(commands[target], undefined, "openspec");
 }
 
-async function runCommand(command, title = command) {
+function getCommandChannel(command, requestedChannel) {
+  if (requestedChannel === "copilot" || requestedChannel === "openspec") {
+    return requestedChannel;
+  }
+  const normalized = String(command || "").trim();
+  if (normalized.startsWith("/openspec-") || normalized === "copilot") {
+    return "copilot";
+  }
+  return "openspec";
+}
+
+async function runCommand(command, title = command, requestedChannel) {
   if (isFileMode) {
     renderFileModeWarning();
     return;
   }
-  if (!socket || socket.readyState !== WebSocket.OPEN) {
-    append(`[${stamp()}] 终端还没有连接好，请稍等几秒再试。\n`, "stderr");
+  const channel = getCommandChannel(command, requestedChannel);
+  const session = getSession(channel);
+  switchTerminal(channel);
+  if (!session.socket || session.socket.readyState !== WebSocket.OPEN) {
+    append(`[${stamp()}] ${session.label} 终端还没有连接好，请稍等几秒再试。\n`, "stderr", channel);
     return;
   }
-  socket.send(JSON.stringify({ type: "command", command: title ? command : command }));
+  const normalized = String(command || "").trim();
+  if (channel === "copilot" && normalized !== "copilot" && !session.booted) {
+    session.pendingCommand = normalized;
+    if (!session.starting) {
+      session.starting = true;
+      try {
+        await sendTerminalCommand(channel, "copilot");
+      } catch (err) {
+        session.starting = false;
+        append(`[${stamp()}] 命令发送失败：${err.message}\n`, "stderr", channel);
+      }
+    }
+    return;
+  }
+  try {
+    await sendTerminalCommand(channel, normalized);
+  } catch (err) {
+    append(`[${stamp()}] 命令发送失败：${err.message}\n`, "stderr", channel);
+  }
+}
+
+async function sendTerminalCommand(channel, command) {
+  if (channel === "copilot") {
+    await sendTerminalInput(channel, "\u0015");
+    await wait(40);
+    await sendTerminalInput(channel, command);
+    await wait(120);
+    await sendTerminalInput(channel, "\r");
+    return;
+  }
+  const res = await fetch("/api/terminal-command", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ channel, command })
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body.error || "命令发送失败");
+  }
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function sendTerminalInput(channel, input) {
+  const res = await fetch("/api/terminal-input", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ channel, input })
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body.error || "按键发送失败");
+  }
 }
 
 function getSelectedInitTools() {
@@ -256,10 +364,11 @@ async function runInitCommand() {
   runInitBtn.disabled = true;
   try {
     const profile = await applyOpenSpecProfile();
-    if (term) {
-      term.writeln(`已启用 ${initProfileSelect.value === "full" ? "完整" : "核心"}流程配置：${profile.workflows.join(", ")}`);
+    const session = getSession("openspec");
+    if (session.term) {
+      session.term.writeln(`已启用 ${initProfileSelect.value === "full" ? "完整" : "核心"}流程配置：${profile.workflows.join(", ")}`);
     }
-    runCommand(buildInitCommand(), "初始化 OpenSpec 项目");
+    runCommand(buildInitCommand(), "初始化 OpenSpec 项目", "openspec");
   } catch (err) {
     append(`[${stamp()}] 初始化配置失败：${err.message}\n`, "stderr");
   } finally {
@@ -272,15 +381,17 @@ commandForm.addEventListener("submit", (event) => {
   const command = commandInput.value.trim();
   if (!command) return;
   commandInput.value = "";
-  runCommand(command);
+  const selectedChannel = document.querySelector(".terminalTab.active")?.dataset.terminalTab || activeTerminal;
+  runCommand(command, command, selectedChannel);
 });
 
 refreshBtn.addEventListener("click", refreshStatus);
 clearBtn.addEventListener("click", () => {
-  if (term) {
-    term.clear();
+  const session = getSession();
+  if (session.term) {
+    session.term.clear();
   } else {
-    terminal.textContent = "";
+    terminalPanes[activeTerminal].textContent = "";
   }
 });
 
@@ -354,6 +465,9 @@ if (initShortcutBtn) {
 terminalSizeButtons.forEach((button) => {
   button.addEventListener("click", () => setTerminalHeight(terminalHeights[button.dataset.terminalSize]));
 });
+terminalTabs.forEach((button) => {
+  button.addEventListener("click", () => switchTerminal(button.dataset.terminalTab));
+});
 terminalResizeHandle.addEventListener("pointerdown", (event) => {
   isResizingTerminal = true;
   resizeStartY = event.clientY;
@@ -397,18 +511,35 @@ function renderFileModeWarning() {
 }
 
 function setTerminalStatus(text, ok = false) {
-  terminalStatus.textContent = text;
-  terminalStatus.className = `terminalStatus ${ok ? "ok" : ""}`;
+  const openspec = terminalSessions.openspec.connected;
+  const copilot = terminalSessions.copilot.connected;
+  if (text) {
+    terminalStatus.textContent = text;
+  } else {
+    terminalStatus.textContent = openspec && copilot
+      ? "双终端已连接"
+      : (openspec || copilot ? "部分连接" : "已断开");
+  }
+  terminalStatus.className = `terminalStatus ${ok || (openspec && copilot) ? "ok" : ""}`;
 }
 
-function resizeTerminal() {
-  if (!socket || socket.readyState !== WebSocket.OPEN || !fitAddon || !term) return;
-  fitAddon.fit();
-  socket.send(JSON.stringify({
+function resizeTerminal(channel = activeTerminal) {
+  const session = getSession(channel);
+  if (!session.socket || session.socket.readyState !== WebSocket.OPEN || !session.fitAddon || !session.term) return;
+  try {
+    session.fitAddon.fit();
+  } catch {
+    return;
+  }
+  session.socket.send(JSON.stringify({
     type: "resize",
-    cols: term.cols,
-    rows: term.rows
+    cols: session.term.cols,
+    rows: session.term.rows
   }));
+}
+
+function resizeTerminals() {
+  Object.keys(terminalSessions).forEach((channel) => resizeTerminal(channel));
 }
 
 function setTerminalHeight(height) {
@@ -417,36 +548,66 @@ function setTerminalHeight(height) {
   const nextHeight = Math.min(Math.max(Number(height) || terminalHeights.medium, minHeight), maxHeight);
   terminalPanel.style.setProperty("--terminal-panel-height", `${nextHeight}px`);
   localStorage.setItem("openspecTerminalHeight", String(nextHeight));
-  requestAnimationFrame(resizeTerminal);
+  requestAnimationFrame(resizeTerminals);
 }
 
 function restoreTerminalHeight() {
   setTerminalHeight(localStorage.getItem("openspecTerminalHeight") || terminalHeights.compact);
 }
 
-function resetTerminal() {
-  if (socket) {
-    socket.close();
-    socket = null;
-  }
-  if (term) {
-    term.dispose();
-    term = null;
-  }
-  terminal.innerHTML = "";
+function resetTerminals() {
+  Object.keys(terminalSessions).forEach((channel) => {
+    const session = terminalSessions[channel];
+    if (session.socket) {
+      session.socket.close();
+      session.socket = null;
+    }
+    if (session.term) {
+      session.term.dispose();
+      session.term = null;
+    }
+    session.fitAddon = null;
+    session.connected = false;
+    session.booted = false;
+    session.starting = false;
+    session.pendingCommand = "";
+    session.outputBuffer = "";
+    terminalPanes[channel].innerHTML = "";
+  });
   setTerminalStatus("连接中");
-  initTerminal();
+  initTerminals();
 }
 
-function initTerminal() {
+function switchTerminal(channel) {
+  if (!terminalSessions[channel]) return;
+  activeTerminal = channel;
+  document.body.dataset.activeTerminal = channel;
+  terminalTabs.forEach((button) => {
+    const active = button.dataset.terminalTab === channel;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  Object.entries(terminalPanes).forEach(([key, pane]) => {
+    pane.classList.toggle("active", key === channel);
+  });
+  const session = getSession(channel);
+  terminalModeTitle.textContent = session.modeTitle;
+  terminalModeDesc.textContent = session.modeDesc;
+  commandPrompt.textContent = session.prompt;
+  commandInput.placeholder = session.placeholder;
+  requestAnimationFrame(resizeTerminals);
+}
+
+function createTerminal(channel) {
   if (isFileMode) return;
   if (!window.Terminal || !window.FitAddon) {
-    terminal.textContent = "终端依赖没有加载成功。请先运行 npm install，然后重新启动服务。";
+    terminalPanes[channel].textContent = "终端依赖没有加载成功。请先运行 npm install，然后重新启动服务。";
     setTerminalStatus("依赖缺失");
     return;
   }
 
-  term = new Terminal({
+  const session = getSession(channel);
+  session.term = new Terminal({
     cursorBlink: true,
     convertEol: true,
     fontFamily: '"JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace',
@@ -459,57 +620,104 @@ function initTerminal() {
       selectionBackground: "#dbe2ff"
     }
   });
-  fitAddon = new FitAddon.FitAddon();
-  term.loadAddon(fitAddon);
-  term.open(terminal);
-  fitAddon.fit();
+  session.fitAddon = new FitAddon.FitAddon();
+  session.term.loadAddon(session.fitAddon);
+  session.term.open(terminalPanes[channel]);
+  if (channel === activeTerminal || channel === "copilot") {
+    session.fitAddon.fit();
+  }
 
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-  socket = new WebSocket(`${protocol}//${location.host}/terminal`);
+  session.socket = new WebSocket(`${protocol}//${location.host}/terminal?channel=${channel}`);
 
-  socket.addEventListener("open", () => {
-    setTerminalStatus("已连接", true);
-    resizeTerminal();
+  session.socket.addEventListener("open", () => {
+    session.connected = true;
+    setTerminalStatus();
+    resizeTerminal(channel);
+    setTimeout(() => resizeTerminal(channel), 120);
+    setTimeout(() => resizeTerminal(channel), 500);
   });
 
-  socket.addEventListener("message", (event) => {
+  session.socket.addEventListener("message", (event) => {
     const message = JSON.parse(event.data);
     if (message.type === "ready") {
-      term.writeln(`已连接到 ${message.platform} 终端：${message.shell}`);
-      term.writeln(`工作目录：${message.cwd}`);
-      term.writeln("");
+      session.term.writeln(`已连接到 ${message.platform} ${session.label} 终端：${message.shell}`);
+      session.term.writeln(`工作目录：${message.cwd}`);
+      if (channel === "copilot") {
+        session.term.writeln("提示：点击上方 Copilot 操作按钮会自动进入 copilot 并发送对应斜杠命令。");
+      }
+      session.term.writeln("");
     }
     if (message.type === "data") {
-      term.write(message.data);
+      session.term.write(message.data);
+      if (channel === "copilot") {
+        updateCopilotState(message.data);
+      }
     }
     if (message.type === "exit") {
-      term.writeln(`\r\n终端已退出，退出码：${message.exitCode}`);
-      setTerminalStatus("已断开");
+      session.term.writeln(`\r\n终端已退出，退出码：${message.exitCode}`);
+      session.connected = false;
+      setTerminalStatus();
     }
     if (message.type === "error") {
-      term.writeln(message.error);
-      term.writeln(`平台：${message.platform}`);
-      term.writeln(`Node：${message.node}`);
-      term.writeln("建议使用 Node.js LTS 版本，并在真实系统终端中运行 npm install 后重启本应用。");
+      session.term.writeln(message.error);
+      session.term.writeln(`平台：${message.platform}`);
+      session.term.writeln(`Node：${message.node}`);
+      session.term.writeln("建议使用 Node.js LTS 版本，并在真实系统终端中运行 npm install 后重启本应用。");
+      session.connected = false;
       setTerminalStatus("启动失败");
     }
   });
 
-  socket.addEventListener("close", () => {
-    setTerminalStatus("已断开");
+  session.socket.addEventListener("close", () => {
+    session.connected = false;
+    setTerminalStatus();
   });
 
-  socket.addEventListener("error", () => {
+  session.socket.addEventListener("error", () => {
+    session.connected = false;
     setTerminalStatus("连接失败");
   });
 
-  term.onData((data) => {
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: "input", data }));
+  session.term.onData((data) => {
+    if (session.socket.readyState === WebSocket.OPEN) {
+      session.socket.send(JSON.stringify({ type: "input", data }));
     }
   });
+}
 
-  window.addEventListener("resize", resizeTerminal);
+function updateCopilotState(data) {
+  const session = terminalSessions.copilot;
+  session.outputBuffer = `${session.outputBuffer}${data}`.slice(-5000);
+  const plain = session.outputBuffer.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
+  if (
+    plain.includes("/ commands")
+    || plain.includes("? help")
+    || plain.includes("Session:")
+    || plain.includes("AIC used")
+    || plain.includes("No copilot-instructions.md")
+  ) {
+    session.booted = true;
+    session.starting = false;
+  }
+  if (session.booted && session.pendingCommand) {
+    const command = session.pendingCommand;
+    session.pendingCommand = "";
+    setTimeout(() => {
+      sendTerminalCommand("copilot", command).catch((err) => {
+        append(`[${stamp()}] 命令发送失败：${err.message}\n`, "stderr", "copilot");
+      });
+    }, 350);
+  }
+}
+
+function initTerminals() {
+  createTerminal("openspec");
+  createTerminal("copilot");
+  switchTerminal(activeTerminal);
+  window.addEventListener("resize", resizeTerminals);
+  setTimeout(resizeTerminals, 120);
+  setTimeout(resizeTerminals, 500);
 }
 
 async function openDirectory(pathToOpen = workspaceInput.value) {
@@ -573,18 +781,36 @@ function renderDirectoryList(entries) {
 
 document.querySelectorAll("[data-command]").forEach((btn) => {
   btn.addEventListener("click", () => {
-    runCommand(btn.dataset.command, btn.dataset.title);
+    const extra = btn.dataset.inputSource
+      ? document.getElementById(btn.dataset.inputSource)?.value.trim()
+      : "";
+    const command = extra ? `${btn.dataset.command} ${extra}` : btn.dataset.command;
+    runCommand(command, btn.dataset.title, btn.dataset.channel);
   });
 });
 
-append(`[${stamp()}] 欢迎使用 OpenSpec 本地管理器。先看左侧环境检查，所有命令输出都会显示在这里。\n`);
+document.querySelectorAll("[data-input]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const channel = btn.dataset.channel || activeTerminal;
+    switchTerminal(channel);
+    const input = btn.dataset.input === "enter" ? "\r" : btn.dataset.input;
+    try {
+      await sendTerminalInput(channel, input);
+    } catch (err) {
+      append(`[${stamp()}] 按键发送失败：${err.message}\n`, "stderr", channel);
+    }
+  });
+});
+
+append(`[${stamp()}] 欢迎使用 SpecPilot。OpenSpec 命令和 Copilot 斜杠命令现在会分别进入独立终端。\n`, "stdout", "openspec");
+append(`[${stamp()}] Copilot 终端已独立准备。这里专门运行 copilot 和 OpenSpec skills 斜杠命令。\n`, "stdout", "copilot");
 refreshInitPreview();
 if (isFileMode) {
   renderFileModeWarning();
 } else {
   restoreTerminalHeight();
   loadWorkspace();
-  initTerminal();
+  initTerminals();
   const events = new EventSource("/api/events");
   events.addEventListener("status", (event) => renderStatus(JSON.parse(event.data)));
   events.addEventListener("workspace", (event) => {

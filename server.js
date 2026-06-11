@@ -31,6 +31,7 @@ const TOOL_PATHS = ["/opt/homebrew/bin", "/usr/local/bin"];
 process.env.PATH = [...TOOL_PATHS, process.env.PATH || ""].join(path.delimiter);
 
 const clients = new Set();
+const terminalChannels = new Map();
 let currentWorkspace = ROOT;
 const CORE_WORKFLOWS = ["propose", "explore", "apply", "sync", "archive"];
 const FULL_WORKFLOWS = [
@@ -356,6 +357,30 @@ async function handleApi(req, res) {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/api/terminal-command") {
+    const body = await readJson(req);
+    const channel = body.channel === "copilot" ? "copilot" : "openspec";
+    const ok = writeCommandToTerminal(channel, body.command);
+    json(res, ok ? 200 : 409, {
+      ok,
+      channel,
+      error: ok ? undefined : "目标终端还没有连接好"
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/terminal-input") {
+    const body = await readJson(req);
+    const channel = body.channel === "copilot" ? "copilot" : "openspec";
+    const ok = writeInputToTerminal(channel, body.input);
+    json(res, ok ? 200 : 409, {
+      ok,
+      channel,
+      error: ok ? undefined : "目标终端还没有连接好"
+    });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/events") {
     res.writeHead(200, {
       "content-type": "text/event-stream; charset=utf-8",
@@ -411,9 +436,31 @@ function normalizeCommand(command) {
   return String(command || "").trim();
 }
 
+function writeCommandToTerminal(channel, command) {
+  const normalized = normalizeCommand(command);
+  const terminalState = terminalChannels.get(channel === "copilot" ? "copilot" : "openspec");
+  if (!terminalState || !terminalState.terminal || !normalized) {
+    return false;
+  }
+  terminalState.terminal.write(normalized);
+  terminalState.terminal.write("\r");
+  return true;
+}
+
+function writeInputToTerminal(channel, input) {
+  const terminalState = terminalChannels.get(channel === "copilot" ? "copilot" : "openspec");
+  if (!terminalState || !terminalState.terminal) {
+    return false;
+  }
+  terminalState.terminal.write(String(input || ""));
+  return true;
+}
+
 const wss = new WebSocketServer({ server, path: "/terminal" });
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws, req) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const channel = url.searchParams.get("channel") === "copilot" ? "copilot" : "openspec";
   const shell = getShell();
   const shellArgs = getShellArgs();
   let terminal;
@@ -430,6 +477,7 @@ wss.on("connection", (ws) => {
       type: "error",
       error: `真实终端启动失败：${err.message}`,
       shell,
+      channel,
       platform: process.platform,
       node: process.version
     }));
@@ -440,9 +488,11 @@ wss.on("connection", (ws) => {
   ws.send(JSON.stringify({
     type: "ready",
     shell,
+    channel,
     cwd: currentWorkspace,
     platform: process.platform
   }));
+  terminalChannels.set(channel, { terminal, ws });
 
   terminal.onData((data) => {
     if (ws.readyState === ws.OPEN) {
@@ -471,10 +521,7 @@ wss.on("connection", (ws) => {
     }
 
     if (message.type === "command") {
-      const command = normalizeCommand(message.command);
-      if (command) {
-        terminal.write(`${command}${os.EOL}`);
-      }
+      writeCommandToTerminal(channel, message.command);
     }
 
     if (message.type === "resize") {
@@ -487,6 +534,9 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
+    if (terminalChannels.get(channel)?.terminal === terminal) {
+      terminalChannels.delete(channel);
+    }
     if (terminal) {
       terminal.kill();
     }

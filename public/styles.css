@@ -671,6 +671,98 @@ button:disabled {
 }
 
 /* ---------- 常用操作 ---------- */
+.commandGroups {
+  display: grid;
+  gap: 18px;
+}
+
+.commandGroup {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(11, 28, 48, 0.04);
+}
+
+.commandGroupHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.commandGroupHeader h3 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.commandGroupHeader p {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.terminalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--blue-bg);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.terminalBadge.copilot {
+  border-color: #0891b2;
+  background: rgba(8, 145, 178, 0.09);
+  color: #0e7490;
+}
+
+.terminalBadge .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.copilotInputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.copilotInputs label {
+  display: grid;
+  gap: 7px;
+}
+
+.copilotInputs span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.copilotInputs textarea {
+  width: 100%;
+  min-height: 86px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-lowest);
+  color: var(--ink);
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+.copilotInputs textarea:focus {
+  outline: none;
+  border-color: #0891b2;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
 .quickGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -709,6 +801,29 @@ button:disabled {
   color: var(--muted);
   font-weight: 500;
   line-height: 1.45;
+}
+
+.quickGrid code {
+  margin-top: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-lowest);
+  color: var(--primary);
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.copilotGroup .quickGrid button:hover {
+  border-color: #0891b2;
+  box-shadow: 0 6px 16px rgba(8, 145, 178, 0.1);
+}
+
+.copilotGroup .quickGrid button .material-symbols-outlined,
+.copilotGroup .quickGrid code {
+  color: #0e7490;
 }
 
 /* ---------- 新手指引 ---------- */
@@ -752,7 +867,9 @@ button:disabled {
 }
 
 .terminalPanel.collapsed .terminalResizeHandle,
-.terminalPanel.collapsed .terminal,
+.terminalPanel.collapsed .terminalTabs,
+.terminalPanel.collapsed .terminalModeHint,
+.terminalPanel.collapsed .terminalStacks,
 .terminalPanel.collapsed .commandForm {
   display: none;
 }
@@ -853,6 +970,72 @@ button:disabled {
   border-right: 0;
 }
 
+.terminalTabs {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+  background: var(--panel);
+}
+
+.terminalTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-lowest);
+  color: var(--muted);
+  padding: 0 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.terminalTab:hover {
+  border-color: var(--primary);
+  color: var(--ink);
+}
+
+.terminalTab.active {
+  background: var(--blue-bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.terminalTab .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.terminalModeHint {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 14px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.terminalModeHint strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.terminalModeHint span {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.terminalStacks {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+}
+
 .terminal {
   flex: 1;
   min-height: 0;
@@ -862,8 +1045,28 @@ button:disabled {
   overflow: auto;
 }
 
+.terminalPane {
+  grid-area: 1 / 1;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.terminalPane.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
 .terminal .xterm {
   height: 100%;
+  width: 100%;
+}
+
+.terminal .xterm-screen,
+.terminal .xterm-helpers,
+.terminal .xterm-viewport {
+  width: 100% !important;
 }
 
 .terminal .xterm-viewport {
@@ -1043,7 +1246,8 @@ button:disabled {
 
   .toolPicker,
   .toolGrid,
-  .quickGrid {
+  .quickGrid,
+  .copilotInputs {
     grid-template-columns: 1fr;
   }
 

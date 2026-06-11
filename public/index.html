@@ -174,49 +174,126 @@
         <section id="view-ops" class="view">
           <div class="viewHead">
             <h2>常用操作</h2>
-            <p class="viewSub">先用推荐配置初始化项目，后续再用常用命令查看和校验。</p>
+            <p class="viewSub">按终端类型分开执行，OpenSpec 命令不会和 Copilot 斜杠命令混在一起。</p>
           </div>
-          <div class="quickGrid">
-            <button data-command="openspec update" data-title="更新 OpenSpec AI 命令">
-              <span class="material-symbols-outlined">sync</span>
-              更新命令
-              <small>切换工具或调整工作流后，同步最新提示词和斜杠命令</small>
-            </button>
-            <button data-command="openspec view" data-title="打开 OpenSpec 仪表盘">
-              <span class="material-symbols-outlined">dashboard</span>
-              打开仪表盘
-              <small>用交互界面浏览 specs 和 changes</small>
-            </button>
-            <button data-command="openspec instructions explore" data-title="查看 Explore 指引">
-              <span class="material-symbols-outlined">lightbulb</span>
-              探索想法
-              <small>正式提案前，查看如何让 AI 先帮你梳理思路</small>
-            </button>
-            <button data-command="openspec list" data-title="查看 OpenSpec 变更">
-              <span class="material-symbols-outlined">list_alt</span>
-              查看变更
-              <small>列出当前活跃的 changes</small>
-            </button>
-            <button data-command="openspec list --specs" data-title="查看 OpenSpec 规格">
-              <span class="material-symbols-outlined">description</span>
-              查看规格
-              <small>列出当前已经沉淀下来的系统规格</small>
-            </button>
-            <button data-command="openspec validate --all" data-title="校验全部规格">
-              <span class="material-symbols-outlined">verified</span>
-              一键校验
-              <small>检查 specs 和 changes 是否规范</small>
-            </button>
-            <button data-command="openspec archive" data-title="归档已完成变更">
-              <span class="material-symbols-outlined">archive</span>
-              归档变更
-              <small>完成开发后，把变更合并进正式规格并归档</small>
-            </button>
-            <button data-command="copilot" data-title="启动 GitHub Copilot CLI">
-              <span class="material-symbols-outlined">smart_toy</span>
-              打开 Copilot
-              <small>进入 Copilot CLI 交互入口</small>
-            </button>
+          <div class="commandGroups">
+            <section class="commandGroup openspecGroup">
+              <div class="commandGroupHeader">
+                <div>
+                  <h3>OpenSpec 终端命令</h3>
+                  <p>用于初始化、查看、校验和归档规格。</p>
+                </div>
+                <span class="terminalBadge">
+                  <span class="material-symbols-outlined">terminal</span>
+                  OpenSpec 终端
+                </span>
+              </div>
+              <div class="quickGrid">
+                <button data-command="openspec update" data-channel="openspec" data-title="更新 OpenSpec AI 命令">
+                  <span class="material-symbols-outlined">sync</span>
+                  更新命令
+                  <small>切换工具或调整工作流后，同步最新提示词和斜杠命令</small>
+                  <code>openspec update</code>
+                </button>
+                <button data-command="openspec view" data-channel="openspec" data-title="打开 OpenSpec 仪表盘">
+                  <span class="material-symbols-outlined">dashboard</span>
+                  打开仪表盘
+                  <small>用交互界面浏览 specs 和 changes</small>
+                  <code>openspec view</code>
+                </button>
+                <button data-command="openspec instructions explore" data-channel="openspec" data-title="查看 Explore 指引">
+                  <span class="material-symbols-outlined">lightbulb</span>
+                  Explore 指引
+                  <small>查看探索阶段怎么和 AI 梳理思路</small>
+                  <code>openspec instructions explore</code>
+                </button>
+                <button data-command="openspec list" data-channel="openspec" data-title="查看 OpenSpec 变更">
+                  <span class="material-symbols-outlined">list_alt</span>
+                  查看变更
+                  <small>列出当前活跃的 changes</small>
+                  <code>openspec list</code>
+                </button>
+                <button data-command="openspec list --specs" data-channel="openspec" data-title="查看 OpenSpec 规格">
+                  <span class="material-symbols-outlined">description</span>
+                  查看规格
+                  <small>列出当前已经沉淀下来的系统规格</small>
+                  <code>openspec list --specs</code>
+                </button>
+                <button data-command="openspec validate --all" data-channel="openspec" data-title="校验全部规格">
+                  <span class="material-symbols-outlined">verified</span>
+                  一键校验
+                  <small>检查 specs 和 changes 是否规范</small>
+                  <code>openspec validate --all</code>
+                </button>
+                <button data-command="openspec archive" data-channel="openspec" data-title="归档已完成变更">
+                  <span class="material-symbols-outlined">archive</span>
+                  归档变更
+                  <small>完成开发后，把变更合并进正式规格并归档</small>
+                  <code>openspec archive</code>
+                </button>
+              </div>
+            </section>
+
+            <section class="commandGroup copilotGroup">
+              <div class="commandGroupHeader">
+                <div>
+                  <h3>Copilot 终端命令</h3>
+                  <p>按钮会向 Copilot CLI 发送 .github/skills 对应的斜杠命令。</p>
+                </div>
+                <span class="terminalBadge copilot">
+                  <span class="material-symbols-outlined">smart_toy</span>
+                  Copilot 终端
+                </span>
+              </div>
+              <div class="copilotInputs">
+                <label>
+                  <span>探索补充</span>
+                  <textarea id="explorePromptInput" rows="3" placeholder="例如：我想做一个本地 OpenSpec 管理工具，但还不确定流程怎么设计"></textarea>
+                </label>
+                <label>
+                  <span>提案需求</span>
+                  <textarea id="proposePromptInput" rows="3" placeholder="例如：增加一个项目模板选择功能，用户不用手写配置"></textarea>
+                </label>
+              </div>
+              <div class="quickGrid">
+                <button data-command="copilot" data-channel="copilot" data-title="启动 GitHub Copilot CLI">
+                  <span class="material-symbols-outlined">smart_toy</span>
+                  打开 Copilot
+                  <small>进入 Copilot CLI 交互入口</small>
+                  <code>copilot</code>
+                </button>
+                <button data-command="/openspec-explore" data-input-source="explorePromptInput" data-channel="copilot" data-title="Copilot 探索想法">
+                  <span class="material-symbols-outlined">psychology</span>
+                  探索想法
+                  <small>让 Copilot 帮你梳理目标、边界和风险</small>
+                  <code>/openspec-explore</code>
+                </button>
+                <button data-command="/openspec-propose" data-input-source="proposePromptInput" data-channel="copilot" data-title="Copilot 生成提案">
+                  <span class="material-symbols-outlined">edit_document</span>
+                  生成提案
+                  <small>生成 proposal、tasks 和 spec delta</small>
+                  <code>/openspec-propose</code>
+                </button>
+                <button data-command="/openspec-apply-change" data-channel="copilot" data-title="Copilot 执行任务">
+                  <span class="material-symbols-outlined">play_arrow</span>
+                  执行任务
+                  <small>让 Copilot 按 tasks 实现代码</small>
+                  <code>/openspec-apply-change</code>
+                </button>
+                <button data-command="/openspec-sync-specs" data-channel="copilot" data-title="Copilot 同步规格">
+                  <span class="material-symbols-outlined">sync_alt</span>
+                  同步规格
+                  <small>将实现结果同步到规格内容</small>
+                  <code>/openspec-sync-specs</code>
+                </button>
+                <button data-command="/openspec-archive-change" data-channel="copilot" data-title="Copilot 归档完成">
+                  <span class="material-symbols-outlined">inventory_2</span>
+                  归档完成
+                  <small>把完成的 change 移入 archive</small>
+                  <code>/openspec-archive-change</code>
+                </button>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -227,11 +304,11 @@
             <p class="viewSub">照着这几步走。</p>
           </div>
           <ol class="steps">
-            <li>需求还不清楚时，在 IDE 聊天里使用 <code>/opsx:explore</code>，让 AI 帮你梳理目标、边界和风险。</li>
-            <li>想清楚后使用 <code>/opsx:propose</code> 描述你要做的需求，让 AI 生成 proposal、tasks 和 spec delta。</li>
+            <li>需求还不清楚时，在 Copilot 终端里使用 <code>/openspec-explore</code>，让 AI 帮你梳理目标、边界和风险。</li>
+            <li>想清楚后使用 <code>/openspec-propose</code> 描述你要做的需求，让 AI 生成 proposal、tasks 和 spec delta。</li>
             <li>回到本页面点“查看变更”或“打开仪表盘”，确认变更已经生成；不放心时点“一键校验”。</li>
-            <li>让 Copilot 执行 <code>/opsx:apply</code>，它会按 tasks 实现代码；完成后再点“一键校验”检查格式和结构。</li>
-            <li>确认功能完成后，先用 <code>/opsx:sync</code> 同步规格，再点“归档变更”或使用 <code>/opsx:archive</code>，把完成的 change 移入 archive。</li>
+            <li>让 Copilot 执行 <code>/openspec-apply-change</code>，它会按 tasks 实现代码；完成后再点“一键校验”检查格式和结构。</li>
+            <li>确认功能完成后，先用 <code>/openspec-sync-specs</code> 同步规格，再点“归档变更”或使用 <code>/openspec-archive-change</code>，把完成的 change 移入 archive。</li>
           </ol>
         </section>
       </div>
@@ -242,7 +319,7 @@
         <div class="terminalHeader">
           <div class="terminalTitle">
             <span class="material-symbols-outlined">terminal</span>
-            <span>系统 Shell</span>
+            <span>双终端工作台</span>
           </div>
           <div class="terminalActions">
             <div class="terminalSizeButtons" aria-label="终端高度">
@@ -258,10 +335,27 @@
             </button>
           </div>
         </div>
-        <div id="terminal" class="terminal" aria-label="真实终端"></div>
+        <div class="terminalTabs" role="tablist" aria-label="终端类型">
+          <button id="openSpecTerminalTab" type="button" class="terminalTab active" data-terminal-tab="openspec" role="tab" aria-selected="true">
+            <span class="material-symbols-outlined">terminal</span>
+            OpenSpec 终端
+          </button>
+          <button id="copilotTerminalTab" type="button" class="terminalTab" data-terminal-tab="copilot" role="tab" aria-selected="false">
+            <span class="material-symbols-outlined">smart_toy</span>
+            Copilot 终端
+          </button>
+        </div>
+        <div class="terminalModeHint">
+          <strong id="terminalModeTitle">OpenSpec 命令模式</strong>
+          <span id="terminalModeDesc">这里运行 openspec、npm、git 等普通命令。</span>
+        </div>
+        <div class="terminalStacks">
+          <div id="terminalOpenSpec" class="terminal terminalPane active" aria-label="OpenSpec 真实终端"></div>
+          <div id="terminalCopilot" class="terminal terminalPane" aria-label="Copilot 真实终端"></div>
+        </div>
         <form id="commandForm" class="commandForm">
-          <span class="commandPrompt">$</span>
-          <input id="commandInput" autocomplete="off" placeholder="输入命令，例如 openspec --version" />
+          <span id="commandPrompt" class="commandPrompt">$</span>
+          <input id="commandInput" autocomplete="off" placeholder="输入 openspec、npm、git 命令" />
           <button type="submit" class="primaryBtn">发送</button>
         </form>
       </section>
