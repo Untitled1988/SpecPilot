@@ -281,9 +281,16 @@ async function runCommand(command, title = command, requestedChannel) {
 
 async function sendTerminalCommand(channel, command) {
   if (channel === "copilot") {
-    await sendTerminalInput(channel, "\u0015");
-    await wait(40);
-    await sendTerminalInput(channel, command);
+    const normalized = String(command || "").trim();
+    // 启动 copilot 这条命令是发给系统 shell（Windows 上为 cmd.exe）的。
+    // cmd.exe 不支持 Ctrl+U 清行，会把该控制字符当成命令的一部分，导致出现
+    // “^Ucopilot”以及 'copilot' is not recognized 错误。
+    // 只有把斜杠命令发送给已经运行的 copilot REPL 时才需要先按 Ctrl+U 清空当前输入行。
+    if (normalized !== "copilot") {
+      await sendTerminalInput(channel, "\u0015");
+      await wait(40);
+    }
+    await sendTerminalInput(channel, normalized);
     await wait(120);
     await sendTerminalInput(channel, "\r");
     return;

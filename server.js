@@ -48,9 +48,12 @@ const FULL_WORKFLOWS = [
   "onboard"
 ];
 
+const DEFAULT_CHECK_TIMEOUT_MS = 15000;
+
 const commands = {
   openspecVersion: { command: "openspec", args: ["--version"] },
-  copilotVersion: { command: "copilot", args: ["--version"] },
+  // copilot.bat 在 Windows 上启动较慢（需加载完整 Node CLI 并检查更新），单独放宽超时
+  copilotVersion: { command: "copilot", args: ["--version"], timeoutMs: 40000 },
   npmVersion: { command: "npm", args: ["--version"] },
   nodeVersion: { command: "node", args: ["--version"] }
 };
@@ -91,7 +94,7 @@ function runCheck(name, spec) {
         version: "",
         message: "检测超时，命令未在限定时间内返回"
       });
-    }, 8000);
+    }, spec.timeoutMs || DEFAULT_CHECK_TIMEOUT_MS);
 
     child.stdout.on("data", (chunk) => {
       output += chunk.toString();
