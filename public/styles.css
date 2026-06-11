@@ -1034,6 +1034,7 @@ button:disabled {
   flex: 1;
   min-height: 0;
   display: grid;
+  overflow: hidden;
 }
 
 .terminal {
@@ -1042,7 +1043,7 @@ button:disabled {
   padding: 10px 12px;
   background: var(--terminal);
   color: var(--terminal-ink);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .terminalPane {
@@ -1063,14 +1064,14 @@ button:disabled {
   width: 100%;
 }
 
+.terminal .xterm-viewport {
+  overflow: hidden !important;
+}
+
 .terminal .xterm-screen,
 .terminal .xterm-helpers,
 .terminal .xterm-viewport {
   width: 100% !important;
-}
-
-.terminal .xterm-viewport {
-  overflow-y: auto;
 }
 
 .commandForm {
